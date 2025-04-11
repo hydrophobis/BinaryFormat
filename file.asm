@@ -1,12 +1,6 @@
-ld R4, 7
-ld R5, 5
-ld R6, 5
-
-prt R4
-prt R6
-
-add R5, R4
-xor R4, R6
-
-prt R4
-prt R5
+str "Enter a number: "
+cin R0
+ld  R1, 48
+sub R0, R1
+str "I guess your number is... "
+prt R0
