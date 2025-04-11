@@ -35,11 +35,11 @@ int main(int argc, char** argv) {
             code = (OP_LD << 24) | (reg_index(r1) << 20) | (val & 0xFFFF);
         }
         
-        else if (sscanf(line, "add %[^,], %[^,], %s", r1, r2, r3) == 3) {
+        else if (sscanf(line, "add %[^,], %s", r1, r2) == 2) {
             code = (OP_ADD << 24) |
                    (reg_index(r1) << 20) |
-                   (reg_index(r2) << 16) |
-                   (reg_index(r3) << 12);
+                   (reg_index(r1) << 16) |
+                   (reg_index(r2) << 12);
         }
         
         else if (sscanf(line, "prt %s", r1) == 1) {

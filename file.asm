@@ -5,7 +5,7 @@ ld R6, 5
 prt R4
 prt R6
 
-add R5, R4, R5
+add R5, R4
 xor R4, R6
 
 prt R4
