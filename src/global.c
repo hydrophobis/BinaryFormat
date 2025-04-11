@@ -1,0 +1,5 @@
+#define OP_LD 0x01
+#define OP_ADD 0x02
+#define OP_XOR 0x03
+#define OP_PRT 0x04
+#define OP_AND 0x05
