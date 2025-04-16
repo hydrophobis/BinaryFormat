@@ -6,109 +6,145 @@
 #include "global.c"
 
 #define MAX_LINE_LEN 100
-char* string_table[MAX_STRINGS];
-int string_count = 0;
 
+#define MAX_VARIABLES 128  
+int* variablePointers; 
+char** variableNames;  
+int variableCounter = 0; 
 
+int add_variable(const char* variable_name) {
+    if (variableCounter >= MAX_VARIABLES) {
+        fprintf(stderr, "Error: Maximum number of variables exceeded\n");
+        exit(EXIT_FAILURE);
+    }
 
-int reg_index(char* r) {
-    return r[1] - '0';
+    variablePointers[variableCounter] = variableCounter;  
+    variableNames[variableCounter] = strdup(variable_name);  
+    return variableCounter++;  
+}
+
+int get_register_index(const char* var_name) {
+    for (int i = 0; i < variableCounter; i++) {
+        if (strcmp(variableNames[i], var_name) == 0) {
+            return variablePointers[i];  
+        }
+    }
+
+    
+    if (variableCounter >= MAX_VARIABLES) {
+        fprintf(stderr, "Error: Maximum number of variables exceeded\n");
+        exit(EXIT_FAILURE);
+    }
+
+    variablePointers[variableCounter] = variableCounter;  
+    variableNames[variableCounter] = strdup(var_name);    
+    return variablePointers[variableCounter++];  
+}
+
+uint32_t encode_instruction(const char* instr_line) {
+    char operation[10], reg1[4], reg2[4], reg3[4];
+    int immediate;
+    uint32_t instruction = 0;
+
+    
+    if (sscanf(instr_line, "%s = %d", reg1, &immediate) == 2) {  
+        instruction |= ((uint32_t)OP_LD) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20; 
+        instruction |= (immediate & 0xFFFF);  
+
+        
+        add_variable(reg1);
+    }
+    
+    else if (sscanf(instr_line, "%s + %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_ADD) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    
+    else if (sscanf(instr_line, "%s ^ %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_XOR) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    
+    else if (sscanf(instr_line, "%s & %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_AND) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    else if (sscanf(instr_line, "%s ~ %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_NOR) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    else if (sscanf(instr_line, "%s / %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_DIV) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    else if (sscanf(instr_line, "%s * %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_MUL) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    else if (sscanf(instr_line, "%s \\ %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_MOD) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    else if (sscanf(instr_line, "%s - %s", reg1, reg2) == 2) {  
+        instruction |= ((uint32_t)OP_SUB) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+        instruction |= ((uint32_t)get_register_index(reg2)) << 16;
+    }
+    else if (sscanf(instr_line, "print %s", reg1) == 1) {  
+        instruction |= ((uint32_t)OP_PRT) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+    }
+    else if (sscanf(instr_line, "input %s", reg1) == 1) {  
+        instruction |= ((uint32_t)OP_CIN) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+    }
+    else if (sscanf(instr_line, "char %s", reg1) == 1) {  
+        instruction |= ((uint32_t)OP_CHR) << 24;
+        instruction |= ((uint32_t)get_register_index(reg1)) << 20;
+    }
+
+    return instruction;
 }
 
 int main(int argc, char** argv) {
+    
+    variablePointers = malloc(MAX_VARIABLES * sizeof(int));
+    variableNames = malloc(MAX_VARIABLES * sizeof(char*));
+
     if (argc < 3) {
-        printf("Usage: %s input.asm output.bin\n", argv[0]);
-        return 1;
+        fprintf(stderr, "Usage: %s input.asm output.bin\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
-    FILE *fin = fopen(argv[1], "r");
-    FILE *fout = fopen(argv[2], "wb");
-    if (!fin || !fout) {
-        perror("File error");
-        return 1;
+    FILE* input_file = fopen(argv[1], "r");
+    FILE* output_file = fopen(argv[2], "wb");
+    if (!input_file || !output_file) {
+        perror("Failed to open file");
+        return EXIT_FAILURE;
     }
 
     char line[MAX_LINE_LEN];
-    while (fgets(line, sizeof(line), fin)) {
-        char instr[10], r1[4], r2[4], r3[4];
-        int val;
-        uint32_t code = 0;
 
-        
-        if (sscanf(line, "ld %[^,], %d", r1, &val) == 2) {
-            code = (OP_LD << 24) | (reg_index(r1) << 20) | (val & 0xFFFF);
-        }
-        
-        else if (sscanf(line, "add %[^,], %s", r1, r2) == 2) {
-            code = (OP_ADD << 24) |
-                   (reg_index(r1) << 20) |
-                   (reg_index(r1) << 16) |
-                   (reg_index(r2) << 12);
-        }
-        
-        else if (sscanf(line, "prt %s", r1) == 1) {
-            code = (OP_PRT << 24) | (reg_index(r1) << 20);
-        } 
-        
-        else if (sscanf(line, "xor %[^,], %s", r1, r2) == 2) {
-            code = (OP_XOR << 24) |
-                   (reg_index(r1) << 20) |
-                   (reg_index(r1) << 16) | 
-                   (reg_index(r2) << 12);  
-        }
-        else if (sscanf(line, "and %[^,], %[^,]", r1, r2) == 2) {
-            code = (OP_AND << 24) | (reg_index(r1) << 20) | (reg_index(r2) << 16);
-        }
-        else if (sscanf(line, "div %[^,], %[^,]", r1, r2) == 2) {
-            code = (OP_DIV << 24) | (reg_index(r1) << 20) | (reg_index(r2) << 16);
-        }
-        else if (sscanf(line, "mul %[^,], %[^,]", r1, r2) == 2) {
-            code = (OP_MUL << 24) | (reg_index(r1) << 20) | (reg_index(r2) << 16);
-        }
-        else if (sscanf(line, "mod %[^,], %[^,]", r1, r2) == 2) {
-            code = (OP_MOD << 24) | (reg_index(r1) << 20) | (reg_index(r2) << 16);
-        }
-        else if (sscanf(line, "sub %[^,], %[^,]", r1, r2) == 2) {
-            code = (OP_SUB << 24) | (reg_index(r1) << 20) | (reg_index(r2) << 16);
-        }
-        else if (sscanf(line, "cin %s", r1) == 1) {
-            code = (OP_CIN << 24) | (reg_index(r1) << 20);
-        }            
-        else if (strncmp(line, "str \"", 5) == 0) {
-            char *start = strchr(line, '"') + 1;
-            char *end = strrchr(line, '"');
-            if (!start || !end || end <= start) continue;
-            
-            size_t len = end - start;
-            char *stored = malloc(len + 1);
-            if (stored == NULL) {
-                printf("Memory allocation for string failed.\n");
-                return 1;
-            }
-            
-            strncpy(stored, start, len);
-            stored[len] = '\0';
-            
-            string_table[string_count] = stored;
-            
-            code = (OP_STR << 24) | ((string_count & 0xFF) << 20);
-            string_count++;
-        }
-        
-        // printf("Encoding instruction: %s -> 0x%08X\n", line, code);
-        fwrite(&code, sizeof(uint32_t), 1, fout);
+    while (fgets(line, sizeof(line), input_file)) {
+        uint32_t instruction = encode_instruction(line);
+        //printf("Encoding instruction: %s -> 0x%08X\n", line, instruction);
+        fwrite(&instruction, sizeof(uint32_t), 1, output_file);
     }
+
     
-    uint32_t marker = STRING_MARKER;
-    fwrite(&marker, sizeof(uint32_t), 1, fout);
-
-    for (int i = 0; i < string_count; i++) {
-        uint32_t len = strlen(string_table[i]);
-        fwrite(&len, sizeof(uint32_t), 1, fout);
-        fwrite(string_table[i], 1, len, fout);
+    for (int i = 0; i < variableCounter; i++) {
+        free(variableNames[i]);
     }
 
-    fclose(fin);
-    fclose(fout);
-    return 0;
+    fclose(input_file);
+    fclose(output_file);
+    return EXIT_SUCCESS;
 }

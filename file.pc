@@ -1,0 +1,6 @@
+t = 64
+print t
+a = 4
+print t
+t + a
+print t

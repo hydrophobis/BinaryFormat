@@ -1,6 +1,7 @@
-str "Enter a number: "
-cin R0
-ld  R1, 48
-sub R0, R1
-str "I guess your number is... "
+ld R0, 1
+ld R1, 1
+prt R0
+prt R1
+
+and R0, R1
 prt R0
