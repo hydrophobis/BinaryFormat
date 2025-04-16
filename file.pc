@@ -1,6 +1,5 @@
-t = 64
-print t
-a = 4
-print t
-t + a
-print t
+64 = 64
+add = 1
+64 + add
+print 64
+char 64

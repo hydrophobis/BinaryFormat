@@ -13,5 +13,4 @@
 #define OP_MOD 0x0D
 #define OP_SUB 0x0E
 
-#define ENCODE(op, rd, rs1, rs2_or_imm) \
-    (((op)  << 22) | ((rd) << 15) | ((rs1) << 8) | ((rs2_or_imm) & 0xFF))
+#define ENCODE(op, rd, rs1, rs2_or_imm) (((op)  << 22) | ((rd) << 15) | ((rs1) << 8) | ((rs2_or_imm) & 0xFF))
