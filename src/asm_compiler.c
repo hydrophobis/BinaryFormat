@@ -7,8 +7,8 @@
 
 #define MAX_LINE_LEN 100
 
-int get_register_index(const char* reg) {
-    if (reg[0] != 'r') {
+int reg_index(const char* reg) {
+    if (!(reg[0] == 'r' || reg[0] == 'R')) {
         fprintf(stderr, "Invalid register name: %s\n", reg);
         exit(EXIT_FAILURE);
     }
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
             code = (OP_CHR << 24) | (reg_index(r1) << 20);
         }
         
-        printf("Encoding instruction: %s -> 0x%08X\n", line, code);
+        //printf("Encoding instruction: %s -> 0x%08X\n", line, code);
         fwrite(&code, sizeof(uint32_t), 1, fout);
     }
 

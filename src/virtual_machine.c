@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#define REGISTER_COUNT 128
-
 #include "global.c"
 
 int registers[REGISTER_COUNT];

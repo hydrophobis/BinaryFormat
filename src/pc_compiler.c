@@ -6,7 +6,7 @@
 #include "global.c"
 
 #define MAX_LINE_LEN 100
-#define MAX_VARIABLES 128
+#define MAX_VARIABLES REGISTER_COUNT
 
 int* variablePointers;
 char** variableNames;
@@ -102,6 +102,7 @@ uint32_t encode_instruction(const char* instr_line) {
         instruction |= ((uint32_t)OP_CHR) << 24;
         instruction |= ((uint32_t)add_variable(reg1, 'c')) << 20;
     }
+    else if (sscanf(instr_line, "macro %s")) // OP_MAC
 
     return instruction;
 }

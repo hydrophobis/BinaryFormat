@@ -2,6 +2,7 @@
 #define OP_PRT 0x02
 #define OP_CHR 0x03
 #define OP_CIN 0x04
+#define OP_MAC 0x05
 
 #define OP_XOR 0x07
 #define OP_AND 0x08
@@ -14,3 +15,5 @@
 #define OP_SUB 0x0E
 
 #define ENCODE(op, rd, rs1, rs2_or_imm) (((op)  << 22) | ((rd) << 15) | ((rs1) << 8) | ((rs2_or_imm) & 0xFF))
+
+#define REGISTER_COUNT 128

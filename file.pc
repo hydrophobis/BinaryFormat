@@ -1,5 +1,5 @@
-64 = 64
+sixtyfour = 64
 add = 1
-64 + add
-print 64
-char 64
+sixtyfour + add
+print sixtyfour
+char sixtyfour
